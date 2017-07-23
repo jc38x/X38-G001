@@ -230,7 +230,7 @@ public static class ASM_RAM80 {
         s2uint.Add("" , 0);
         s2uint.Add("S", 1);
 
-        sign2int.Add("+" ,  1); sign2int.Add("" ,  1);
+        sign2int.Add("+",  1); sign2int.Add("" ,  1);
         sign2int.Add("-", -1);
     }
 
