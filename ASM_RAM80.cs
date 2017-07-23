@@ -257,6 +257,15 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * NOT{S} Rd, Ro 
+     * INC{S} Rd, Ro 
+     * DEC{S} Rd, Ro
+     * ROL{S} Rd, Ro
+     * ROR{S} Rd, Ro
+     * RLX{S} Rd, Ro
+     * RRX{S} Rd, Ro
+     */
     static uint ASM_NOT(string operands, Match mr) { return Format_0_1_EOP_F(operands, mr, 0x1); }
     static uint ASM_INC(string operands, Match mr) { return Format_0_1_EOP_F(operands, mr, 0x2); }
     static uint ASM_DEC(string operands, Match mr) { return Format_0_1_EOP_F(operands, mr, 0x3); }
@@ -268,17 +277,41 @@ public static class ASM_RAM80 {
     static uint Format_0_1_4_5_6_7_3R(string operands, Match mr, uint OPC) {
         uint  S = s2uint[mr.Groups[2].Value];
         Match mo;
-        mo = o_rrr.Match (operands); if (mo.Success) { return Format_0_1(OPC, S, r2uint[mo.Groups[1].Value], r2uint[mo.Groups[2].Value], r2uint[mo.Groups[3].Value]); }
+        mo = o_rrr.Match (operands); if (mo.Success) {               return Format_0_1(OPC, S, r2uint[mo.Groups[1].Value], r2uint[mo.Groups[2].Value], r2uint[mo.Groups[3].Value]); }
         mo = o_rimm.Match(operands); if (mo.Success) { if (S == 1) { return Format_4_5_6_7(OPC, r2uint[mo.Groups[1].Value], CheckImm8(GetImm(mo, 1))); } return BadVariant("omitting S", "with immediate operand", mr); }
         return BadOperands(operands, mr);
     }
 
+    /*
+     *  OR{S} Rd, Ro1, Ro2
+     *  ORS   Rd, Imm8
+     * XOR{S} Rd, Ro1, Ro2
+     * XORS   Rd, Imm8
+     * AND{S} Rd, Ro1, Ro2
+     * ANDS   Rd, Imm8
+     * ADC{S} Rd, Ro1, Ro2
+     * ADCS   Rd, Imm8
+     * BIC{S} Rd, Ro1, Ro2
+     * BICS   Rd, Imm8
+     */
     static uint ASM_OR (string operands, Match mr) { return Format_0_1_4_5_6_7_3R(operands, mr, 0x2); }
     static uint ASM_XOR(string operands, Match mr) { return Format_0_1_4_5_6_7_3R(operands, mr, 0x3); }
     static uint ASM_AND(string operands, Match mr) { return Format_0_1_4_5_6_7_3R(operands, mr, 0x4); }
     static uint ASM_ADC(string operands, Match mr) { return Format_0_1_4_5_6_7_3R(operands, mr, 0x5); }
     static uint ASM_BIC(string operands, Match mr) { return Format_0_1_4_5_6_7_3R(operands, mr, 0x7); }
 
+    /*
+     * MUL{S} Rd, Ro1, Ro2
+     * MULS   Rd, Imm8 
+     */
+    static uint ASM_MUL(string operands, Match mr) {
+        uint  S = s2uint[mr.Groups[2].Value];
+        Match mo;
+        mo = o_rrr.Match (operands); if (mo.Success) {               return Format_2_3(S, r2uint[mo.Groups[1].Value], r2uint[mo.Groups[2].Value], r2uint[mo.Groups[3].Value]); }
+        mo = o_rimm.Match(operands); if (mo.Success) { if (S == 1) { return Format_2_4_5(r2uint[mo.Groups[1].Value], CheckImm8(GetImm(mo, 1))); } return BadVariant("omitting S", "with immediate operand", mr); }
+        return BadOperands(operands, mr);
+    }
+    
     static uint Format_0_1_SHF(string operands, Match mr, uint OPC) {
         uint  S = s2uint[mr.Groups[2].Value];
         Match mo;
@@ -287,6 +320,14 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * LSL{S} Rd, Ro1, Ro2
+     * LSL{S} Rd, Ro, UImm3 (1,8)
+     * LSR{S} Rd, Ro1, Ro2
+     * LSR{S} Rd, Ro, UImm3 (1,8)
+     * ASR{S} Rd, Ro1, Ro2
+     * ASR{S} Rd, Ro, UImm3 (1,8)
+     */
     static uint ASM_LSL(string operands, Match mr) { return Format_0_1_SHF(operands, mr, 0x8); }
     static uint ASM_LSR(string operands, Match mr) { return Format_0_1_SHF(operands, mr, 0x9); }
     static uint ASM_ASR(string operands, Match mr) { return Format_0_1_SHF(operands, mr, 0xA); }
@@ -298,10 +339,23 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * CMN Ro1, Ro2
+     * CMN Rd, Imm8
+     * TST Ro1, Ro2
+     * TST Rd, Imm8
+     * TEQ Ro1, Ro2
+     * TEQ Rd, Imm8
+     */
     static uint ASM_CMN(string operands, Match mr) { return Format_0_1_4_5_6_7_CMN(operands, mr, 0x1, 0xC); }
     static uint ASM_TST(string operands, Match mr) { return Format_0_1_4_5_6_7_CMN(operands, mr, 0x2, 0xD); }
     static uint ASM_TEQ(string operands, Match mr) { return Format_0_1_4_5_6_7_CMN(operands, mr, 0x3, 0xE); }
 
+    /*
+     * CMP Ro1, Ro2
+     * CMP Imm8, Rd
+     * CMP Rd, Imm8
+     */
     static uint ASM_CMP(string operands, Match mr) {
         Match mo;
         mo = o_rr.Match  (operands); if (mo.Success) { return Format_0_1(0xB, 1, 0x0, r2uint[mo.Groups[1].Value], r2uint[mo.Groups[2].Value]); }
@@ -319,9 +373,22 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * SBC{S} Rd, Ro1, Ro2
+     * SBCS   Rd, Imm8
+     * SBCS   Imm8, Rd
+     * SUB{S} Rd, Ro1, Ro2
+     * SUBS   Rd, Imm8
+     * SUBS   Imm8, Rd
+     */
     static uint ASM_SBC(string operands, Match mr) { return Format_0_1_4_5_6_7_SUB(operands, mr, 0x6, 0x9); }
     static uint ASM_SUB(string operands, Match mr) { return Format_0_1_4_5_6_7_SUB(operands, mr, 0x1, 0x8); }
 
+    /*
+     * ADD{S} Rd, Ro1, Ro2
+     * ADDS   Rd, Imm8
+     * ADD    SP, Imm6 (-32,-1)U(1,32)
+     */
     static uint ASM_ADD(string operands, Match mr) {
         uint  S = s2uint[mr.Groups[2].Value];
         Match mo;
@@ -336,16 +403,28 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     *  NEG{S} Rd, Ro
+     * SWAP{S} Rd, Ro
+     * RBCD{S} Rd, Ro
+     * BCDR{S} Rd, Ro
+     */
     static uint ASM_NEG (string operands, Match mr) { return Format_0_1_EOP_B(operands, mr, 0x4); }
     static uint ASM_SWAP(string operands, Match mr) { return Format_0_1_EOP_B(operands, mr, 0x5); }
     static uint ASM_RBCD(string operands, Match mr) { return Format_0_1_EOP_B(operands, mr, 0x6); }
     static uint ASM_BCDR(string operands, Match mr) { return Format_0_1_EOP_B(operands, mr, 0x7); }
 
+    /*
+     * XCHG Ro, Ro 
+     */
     static uint ASM_XCHG(string operands, Match mr) {
         Match mo = o_rr.Match(operands); if (mo.Success) { return Format_0_1(0xB, 0, 0x0, r2uint[mo.Groups[1].Value], r2uint[mo.Groups[2].Value]); }
         return BadOperands(operands, mr);
     }
 
+    /*
+     * BTST Ro, UImm3 (0,7) 
+     */
     static uint ASM_BTST(string operands, Match mr) {
         Match mo = o_rimm.Match(operands); if (mo.Success) { return Format_0_1(0xB, 0, 0x1, r2uint[mo.Groups[1].Value], CheckImm3_0to7(GetImm(mo, 1))); }
         return BadOperands(operands, mr);
@@ -356,9 +435,20 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     *  MRS Rh:Rl
+     *  MSR Rh:Rl
+     */
     static uint ASM_MRS(string operands, Match mr) { return Format_0_1_MRS(operands, mr, 0x2); }
     static uint ASM_MSR(string operands, Match mr) { return Format_0_1_MRS(operands, mr, 0x3); }
 
+    /*
+     * MOV{S} Rd, Ro
+     * MOV Rd, Imm8
+     * MOV Rh:Rl, PC
+     * MOV Rh:Rl, SP
+     * MOV SP, Rh:Rl 
+     */
     static uint ASM_MOV(string operands, Match mr) {
         uint  S = s2uint[mr.Groups[2].Value];
         Match mo;
@@ -370,6 +460,10 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * B{cc} Rh:Rl
+     * B{cc} Imm6 (-64,-2)U(2,64) 
+     */
     static uint ASM_B(string operands, Match mr) {
         uint  COND = cond2uint[mr.Groups[2].Value];
         Match mo;
@@ -378,6 +472,9 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * SWI Imm6 (0,63) 
+     */
     static uint ASM_SWI(string operands, Match mr) {
         Match mo = o_imm.Match(operands); if (mo.Success) { return Format_2_1(0xF, CheckImm6_0to63(GetImm(mo, 0))); }
         return BadOperands(operands, mr);
@@ -390,9 +487,19 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * LDR Rd, [Rh:Rl]
+     * LDR Rd, [SP + Imm6] (0,63)
+     * STR Rd, [Rh:Rl]
+     * STR Rd, [SP + Imm6] (0,63)
+     */
     static uint ASM_LDR(string operands, Match mr) { return Format_2_2_7(operands, mr, 1); }
     static uint ASM_STR(string operands, Match mr) { return Format_2_2_7(operands, mr, 0); }
 
+    /*
+     * POP {Rlist}
+     * POP PC
+     */
     static uint ASM_POP(string operands, Match mr) {
         Match mo;        
         mo = o_rlist.Match(operands); if (mo.Success) { return Format_2_6_0_1_2(0x1, GetRList(mo.Groups[1].Value)); }
@@ -400,6 +507,12 @@ public static class ASM_RAM80 {
         return BadOperands(operands, mr);
     }
 
+    /*
+     * PUSH {Rlist}
+     * PUSH PC
+     * PUSH Imm8
+     * PUSH PC, Imm6 (-64,-2)U(2,64)     
+     */
     static uint ASM_PUSH(string operands, Match mr) {
         Match mo;
         mo = o_rlist.Match(operands); if (mo.Success) { return Format_2_6_0_1_2(0x0, GetRList(mo.Groups[1].Value)); }
