@@ -194,7 +194,7 @@ public static class ASM_RAM80 {
     static Regex o_SP2HL = new Regex(oplead + RhRl  + comma + "SP"                  + trail);
     static Regex o_HL2SP = new Regex(oplead + "SP"  + comma + RhRl                  + trail);
     static Regex o_PC    = new Regex(oplead + "PC"                                  + trail);
-    static Regex o_PCimm = new Regex(oplead + "PC"  + comma + imm                   + trail);    
+    static Regex o_PCimm = new Regex(oplead + "PC"  + plus  + imm                   + trail);
 
     static Dictionary<string, uint> cond2uint = new Dictionary<string, uint>();
     static Dictionary<string, uint> r2uint    = new Dictionary<string, uint>();
@@ -322,11 +322,11 @@ public static class ASM_RAM80 {
 
     /*
      * LSL{S} Rd, Ro1, Ro2
-     * LSL{S} Rd, Ro, UImm3 (1,8)
+     * LSL{S} Rd, Ro, Imm3 (1,8)
      * LSR{S} Rd, Ro1, Ro2
-     * LSR{S} Rd, Ro, UImm3 (1,8)
+     * LSR{S} Rd, Ro, Imm3 (1,8)
      * ASR{S} Rd, Ro1, Ro2
-     * ASR{S} Rd, Ro, UImm3 (1,8)
+     * ASR{S} Rd, Ro, Imm3 (1,8)
      */
     static uint ASM_LSL(string operands, Match mr) { return Format_0_1_SHF(operands, mr, 0x8); }
     static uint ASM_LSR(string operands, Match mr) { return Format_0_1_SHF(operands, mr, 0x9); }
@@ -423,7 +423,7 @@ public static class ASM_RAM80 {
     }
 
     /*
-     * BTST Ro, UImm3 (0,7) 
+     * BTST Ro, Imm3 (0,7) 
      */
     static uint ASM_BTST(string operands, Match mr) {
         Match mo = o_rimm.Match(operands); if (mo.Success) { return Format_0_1(0xB, 0, 0x1, r2uint[mo.Groups[1].Value], CheckImm3_0to7(GetImm(mo, 1))); }
@@ -436,8 +436,8 @@ public static class ASM_RAM80 {
     }
 
     /*
-     *  MRS Rh:Rl
-     *  MSR Rh:Rl
+     * MRS Rh:Rl
+     * MSR Rh:Rl
      */
     static uint ASM_MRS(string operands, Match mr) { return Format_0_1_MRS(operands, mr, 0x2); }
     static uint ASM_MSR(string operands, Match mr) { return Format_0_1_MRS(operands, mr, 0x3); }
@@ -511,7 +511,7 @@ public static class ASM_RAM80 {
      * PUSH {Rlist}
      * PUSH PC
      * PUSH Imm8
-     * PUSH PC, Imm6 (-64,-2)U(2,64)     
+     * PUSH PC + Imm6 (-64,-2)U(2,64)     
      */
     static uint ASM_PUSH(string operands, Match mr) {
         Match mo;
